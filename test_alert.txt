@@ -1,0 +1,8 @@
+Test Case 1 – Malicious IP Detection
+Alert Name: Suspicious Outbound Connection
+Hostname: HR-PC-12
+Source IP: 45.148.10.20
+Process:
+chrome.exe
+Description:
+User connected to an unknown external server.
