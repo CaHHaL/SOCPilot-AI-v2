@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SOCPilot AI — Security Operations Dashboard</title>
+  <meta name="description" content="Production-grade SOC dashboard for reviewing AI-generated security investigation reports, threat intelligence findings, and MITRE ATT&CK mappings." />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Marked.js for markdown rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <!-- ── Background Grid ── -->
+  <div class="bg-grid"></div>
+  <div class="bg-radial"></div>
+
+  <!-- ── Sidebar Navigation ── -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <circle cx="14" cy="14" r="13" stroke="#00d4ff" stroke-width="1.5" opacity="0.5"/>
+          <circle cx="14" cy="14" r="8" stroke="#00d4ff" stroke-width="1.5"/>
+          <circle cx="14" cy="14" r="3" fill="#00d4ff"/>
+          <line x1="14" y1="1" x2="14" y2="6" stroke="#00d4ff" stroke-width="1.5"/>
+          <line x1="14" y1="22" x2="14" y2="27" stroke="#00d4ff" stroke-width="1.5"/>
+          <line x1="1" y1="14" x2="6" y2="14" stroke="#00d4ff" stroke-width="1.5"/>
+          <line x1="22" y1="14" x2="27" y2="14" stroke="#00d4ff" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <span class="brand-name">SOCPilot</span>
+        <span class="brand-sub">AI Dashboard</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section-label">NAVIGATION</div>
+
+    <ul class="nav-list">
+      <li>
+        <a class="nav-item" href="#/" id="nav-overview" data-page="overview">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+            <rect x="2" y="2" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="11" y="2" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="2" y="11" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="11" y="11" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+          </svg>
+          <span>Overview</span>
+        </a>
+      </li>
+      <li>
+        <a class="nav-item" href="#/reports" id="nav-reports" data-page="reports">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+            <path d="M4 3h8l4 4v10a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M12 3v4h4" stroke="currentColor" stroke-width="1.5"/>
+            <line x1="7" y1="9" x2="13" y2="9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="7" y1="12" x2="13" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="7" y1="15" x2="10" y2="15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <span>Reports</span>
+          <span class="nav-badge" id="reports-count-badge">0</span>
+        </a>
+      </li>
+      <li>
+        <a class="nav-item" href="#/stats" id="nav-stats" data-page="stats">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+            <polyline points="3,15 7,9 11,12 15,5 17,7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Statistics</span>
+        </a>
+      </li>
+    </ul>
+
+    <div class="sidebar-section-label" style="margin-top: auto;">SYSTEM</div>
+
+    <div class="sidebar-status">
+      <div class="status-row">
+        <div class="status-dot" id="status-dot"></div>
+        <span class="status-label" id="status-label">Connecting...</span>
+      </div>
+      <div class="status-sub" id="status-sub">Live monitoring</div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="footer-icon">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+          <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>
+          <line x1="10" y1="10" x2="10" y2="6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="10" y1="10" x2="13" y2="13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="footer-time" id="current-time">--:--:--</div>
+    </div>
+  </nav>
+
+  <!-- ── Main Content ── -->
+  <main class="main-content" id="main-content">
+
+    <!-- Top Bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="page-breadcrumb" id="page-breadcrumb">
+          <span class="breadcrumb-root">SOCPilot</span>
+          <span class="breadcrumb-sep">›</span>
+          <span class="breadcrumb-current" id="breadcrumb-current">Overview</span>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button class="topbar-btn" id="refresh-btn" title="Refresh data">
+          <svg viewBox="0 0 20 20" fill="none" width="16" height="16">
+            <path d="M17 10A7 7 0 1110 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <polyline points="14,3 17,3 17,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button class="topbar-btn notif-btn" id="notif-btn" title="Notifications">
+          <svg viewBox="0 0 20 20" fill="none" width="16" height="16">
+            <path d="M10 2a6 6 0 016 6v4l1.5 2.5H2.5L4 12V8a6 6 0 016-6z" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M8 17a2 2 0 004 0" stroke="currentColor" stroke-width="1.5"/>
+          </svg>
+          <span class="notif-badge hidden" id="notif-badge">0</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Page Container -->
+    <div class="page-container" id="page-container">
+      <!-- Pages injected by JS -->
+    </div>
+  </main>
+
+  <!-- ── Notification Drawer ── -->
+  <aside class="notif-drawer" id="notif-drawer">
+    <div class="notif-drawer-header">
+      <h3>Live Alerts</h3>
+      <button class="icon-btn" id="notif-clear-btn" title="Clear all">
+        <svg viewBox="0 0 20 20" fill="none" width="16" height="16">
+          <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+    <div class="notif-list" id="notif-list">
+      <div class="notif-empty">
+        <svg viewBox="0 0 40 40" fill="none" width="40" height="40">
+          <circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
+          <path d="M20 10a8 8 0 018 8v5l2 3H10l2-3v-5a8 8 0 018-8z" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
+        </svg>
+        <p>No new notifications</p>
+        <span>Watching reports/ for changes...</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Toast Container ── -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- ── Scripts ── -->
+  <script src="/static/js/notifications.js"></script>
+  <script src="/static/js/dashboard.js"></script>
+  <script src="/static/js/reports.js"></script>
+  <script src="/static/js/report-detail.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
